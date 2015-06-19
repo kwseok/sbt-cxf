@@ -15,8 +15,8 @@ object Import {
 
   object CxfKeys {
 
-    val wsdl2java = taskKey[Seq[File]]("Generates java files from wsdls")
-    val wsdls     = settingKey[Seq[Wsdl]]("wsdls to generate java files from")
+    val wsdl2java = TaskKey[Seq[File]]("cxf-wsdl2java", "Generates java files from wsdls")
+    val wsdls     = SettingKey[Seq[Wsdl]]("cxf-wsdls", "wsdls to generate java files from")
 
   }
 
@@ -44,16 +44,16 @@ object SbtCxf extends AutoPlugin {
       "org.apache.cxf" % "cxf-tools-wsdlto-databinding-jaxb" % version % cxf,
       "org.apache.cxf" % "cxf-tools-wsdlto-frontend-jaxws" % version % cxf
     )),
-    wsdls in cxf := Nil,
+    wsdls := Nil,
     managedClasspath in cxf <<= (classpathTypes in cxf, update) map { (ct, report) =>
       Classpaths.managedJars(cxf, ct, report)
     },
     sourceManaged in cxf <<= sourceManaged(_ / "cxf"),
-    managedSourceDirectories in Compile <++= (wsdls in cxf, sourceManaged in cxf) { (wsdls, basedir) =>
+    managedSourceDirectories in Compile <++= (wsdls, sourceManaged in cxf) { (wsdls, basedir) =>
       wsdls.map(_.outputDirectory(basedir) / "main")
     },
     clean in cxf := IO.delete((sourceManaged in cxf).value),
-    wsdl2java in cxf <<= (streams in cxf, wsdls in cxf, sourceManaged in cxf, managedClasspath in cxf).map { (streams, wsdls, basedir, cp) =>
+    wsdl2java <<= (streams, wsdls, sourceManaged in cxf, managedClasspath in cxf).map { (streams, wsdls, basedir, cp) =>
       val classpath = cp.files
       (for (wsdl <- wsdls) yield {
         val output = wsdl.outputDirectory(basedir)
@@ -76,7 +76,7 @@ object SbtCxf extends AutoPlugin {
         cachedFn(Set(wsdlFile))
       }).flatten
     },
-    sourceGenerators in Compile <+= wsdl2java in cxf
+    sourceGenerators in Compile <+= wsdl2java
   )
 
   private def callWsdl2java(streams: TaskStreams, id: String, output: File, args: Seq[String], classpath: Seq[File]) {
