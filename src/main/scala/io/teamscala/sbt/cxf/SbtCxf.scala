@@ -50,32 +50,43 @@ object SbtCxf extends AutoPlugin {
     },
     sourceManaged in cxf <<= sourceManaged(_ / "cxf"),
     managedSourceDirectories in Compile <++= (wsdls in cxf, sourceManaged in cxf) { (wsdls, basedir) =>
-      wsdls.map(_.outputDirectory(basedir))
+      wsdls.map(_.outputDirectory(basedir) / "main")
     },
-    wsdl2java in cxf <<= (wsdls in cxf, sourceManaged in cxf, managedClasspath in cxf).map { (wsdls, basedir, cp) =>
+    clean in cxf := IO.delete((sourceManaged in cxf).value),
+    wsdl2java in cxf <<= (streams in cxf, wsdls in cxf, sourceManaged in cxf, managedClasspath in cxf).map { (streams, wsdls, basedir, cp) =>
       val classpath = cp.files
       (for (wsdl <- wsdls) yield {
         val output = wsdl.outputDirectory(basedir)
-        val maybeFile = Try(url(wsdl.uri)).map(IO.urlAsFile).recover {
-          case e: MalformedURLException => None
+        val mainOutput = output / "main"
+        val cacheOutput = output / "cache"
+
+        val wsdlFile = Try(url(wsdl.uri)).map(wsdlUrl => IO.urlAsFile(wsdlUrl).getOrElse {
+          val wsdlFile = cacheOutput / "wsdl"
+          if (!wsdlFile.exists) IO.download(wsdlUrl, wsdlFile)
+          wsdlFile
+        }).recover {
+          case e: MalformedURLException => file(wsdl.uri)
         }.get
-        if (!maybeFile.exists(_.lastModified() <= output.lastModified())) {
-          val args = Seq("-d", output.getAbsolutePath) ++ wsdl.args :+ wsdl.uri
-          callWsdl2java(wsdl.key, output, args, classpath)
+
+        val cachedFn = FileFunction.cached(cacheOutput, FilesInfo.lastModified, FilesInfo.exists) { _ =>
+          val args = Seq("-d", mainOutput.getAbsolutePath) ++ wsdl.args :+ wsdl.uri
+          callWsdl2java(streams, wsdl.key, mainOutput, args, classpath)
+          (mainOutput ** "*.java").get.toSet
         }
-        (output ** "*.java").get
+        cachedFn(Set(wsdlFile))
       }).flatten
     },
     sourceGenerators in Compile <+= wsdl2java in cxf
   )
 
-  private def callWsdl2java(id: String, output: File, args: Seq[String], classpath: Seq[File]) {
+  private def callWsdl2java(streams: TaskStreams, id: String, output: File, args: Seq[String], classpath: Seq[File]) {
     // TODO: Use the built-in logging mechanism from SBT when I figure out how that work - trygve
-    println("WSDL: id=" + id + ", args=" + args)
-    println("Removing output directory...")
+    streams.log.info("WSDL: id=" + id + ", args=" + args)
+
+    streams.log.debug("Removing output directory... " + output)
     IO.delete(output)
 
-    println("Compiling WSDL...")
+    streams.log.info("Compiling WSDL...")
     val start = System.currentTimeMillis()
     val classLoader = ClasspathUtilities.toLoader(classpath)
     val WSDLToJava = classLoader.loadClass("org.apache.cxf.tools.wsdlto.WSDLToJava")
@@ -97,7 +108,7 @@ object SbtCxf extends AutoPlugin {
         throw e
     } finally {
       val end = System.currentTimeMillis()
-      println("Compiled WSDL in " + (end - start) + "ms.")
+      streams.log.info("Compiled WSDL in " + (end - start) + "ms.")
       Thread.currentThread.setContextClassLoader(oldContextClassLoader)
     }
   }
