@@ -4,6 +4,6 @@ organization := "io.teamscala.sbt"
 
 name := "sbt-cxf"
 
-version := "0.2.2"
+version := "0.2.3"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.5"
