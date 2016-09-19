@@ -6,7 +6,7 @@ Installation
 To use this plugin use the addSbtPlugin command within your project's `plugins.sbt` file:
 
 ```scala
-addSbtPlugin("io.teamscala.sbt" % "sbt-cxf" % "0.2.3")
+addSbtPlugin("com.github.stonexx.sbt" % "sbt-cxf" % "0.2.4")
 ```
 
 For example with `build.sbt`:

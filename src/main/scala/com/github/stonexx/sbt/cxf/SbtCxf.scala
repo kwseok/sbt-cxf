@@ -1,4 +1,4 @@
-package io.teamscala.sbt.cxf
+package com.github.stonexx.sbt.cxf
 
 import java.io.File
 import java.net.MalformedURLException
@@ -38,7 +38,7 @@ object SbtCxf extends AutoPlugin {
 
   override def projectSettings: Seq[Setting[_]] = Seq(
     ivyConfigurations += cxf,
-    version in cxf := "2.7.16",
+    version in cxf := "3.1.7",
     libraryDependencies <++= (version in cxf)(version => Seq(
       "org.apache.cxf" % "cxf-tools-wsdlto-core" % version % cxf,
       "org.apache.cxf" % "cxf-tools-wsdlto-databinding-jaxb" % version % cxf,

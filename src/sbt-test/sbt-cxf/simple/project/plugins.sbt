@@ -1,2 +1,2 @@
-addSbtPlugin("io.teamscala.sbt" % "sbt-cxf" % sys.props("project.version"))
+addSbtPlugin("com.github.stonexx.sbt" % "sbt-cxf" % sys.props("project.version"))
 
