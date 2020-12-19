@@ -23,4 +23,11 @@ tmp/
 .ensime_session
 .ensime.sublime-workspace
 
+.DS_Store
+.envrc
+.bloop/
+.metals/
+.vscode/
+metals.sbt
+
 RUNNING_PID

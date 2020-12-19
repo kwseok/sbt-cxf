@@ -1,21 +1,21 @@
-sbtPlugin := true
-
+//sbtPlugin := true
+enablePlugins(SbtPlugin)
 val ghOwner = "CareCloud"
 
 organization  := "com.carecloud"
 
 name := "sbt-cxf"
 
-scalaVersion := "2.10.5"
+scalaVersion := "2.12.12"
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-githubOwner := ghOwner,
+githubOwner := ghOwner
 
-githubRepository := "sbt-cfx",
+githubRepository := "sbt-cfx"
 
-githubTokenSource := TokenSource.Environment("GITHUB_TOKEN") || TokenSource.GitConfig("github.token"),
+githubTokenSource := TokenSource.Environment("GITHUB_TOKEN") || TokenSource.GitConfig("github.token")
 
-resolvers ++= Seq[Resolver](
-Resolver.githubPackages(ghOwner)
-)
+// resolvers ++= Seq[Resolver](
+// Resolver.githubPackages(ghOwner)
+// )
